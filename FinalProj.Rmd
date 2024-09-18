@@ -1,0 +1,166 @@
+---
+title: "Data Analysis Project"
+output: pdf_document
+date: "2024-04-30"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r load-packages, echo=FALSE, include=FALSE, results=FALSE}
+library("readr") 
+library("readxl") 
+library("tidyverse")
+library("dplyr")
+library("dplyr")
+library("ggplot2")
+library("e1071")
+library("tinytex")
+library("knitr")
+```
+#TASK 1 : Prescriptive Part
+
+###Question 1 :
+### I read in the data into R directly using the URL.
+```{r}
+tkurra_house <- read_csv("https://www4.stat.ncsu.edu/~online/ST308/Data/tkurra_house.csv")
+head(tkurra_house)
+```
+
+###Question 2 :
+### I used chaining to create a tibble and first filter out "ClearCr" value from the Neighborhood variable or the year sold being less than or equal to 2006. Then I created a new variable by using the mutate function from tidyverse and dividing the sale price by 100000. I named the new variable DivSP by using the = operator. Then, I removed the WoodDeckSF and LotShape variables by using the select function and using a "-" to remove them. Finally, I used the kabble function to display the first 10 rows and 6 columns of my new tibble, tkurra_house2.
+
+```{r}
+tkurra_house2 <- tkurra_house %>%
+  filter(!(Neighborhood == "ClearCr" | YrSold <= 2006)) %>% 
+  mutate(DivSP = SalePrice / 100000) %>%  
+  select(-WoodDeckSF, -LotShape)  
+kable(head(tkurra_house2[, 1:6], 10))
+head(tkurra_house2)
+```
+
+
+###Question 3 :
+### To produce the summary statistics, I first used the group by function so that it gives me statistics at every level of Land Contour. Then, I created new variables for each mean, standard deviation, quantile I wanted from the SalePrice, LotArea and FirstFlrSF variables. The first quartile is .25 while the third is .75, so I used those values while creating it. 
+```{r}
+
+summary_stats <- tkurra_house2 %>%
+  group_by(LandContour) %>%
+  summarise(
+    SalePrice_mean = mean(SalePrice),
+    SalePrice_sd = sd(SalePrice),
+    SalePrice_q1 = quantile(SalePrice, probs = 0.25),
+    SalePrice_q3 = quantile(SalePrice, probs = 0.75),
+    LotArea_mean = mean(LotArea),
+    LotArea_sd = sd(LotArea),
+    LotArea_q1 = quantile(LotArea, probs = 0.25),
+    LotArea_q3 = quantile(LotArea, probs = 0.75),
+    FirstFlrSF_mean = mean(FirstFlrSF),
+    FirstFlrSF_sd = sd(FirstFlrSF),
+    FirstFlrSF_q1 = quantile(FirstFlrSF, probs = 0.25),
+    FirstFlrSF_q3 = quantile(FirstFlrSF, probs = 0.75)
+  )
+
+head(summary_stats)
+
+```
+
+
+###Question 4 :
+### I created the scatter plot using ggplot from the gglplot2 package and made the X values the Lot Area and Y values the Sale Price. A pattern I see in the plot is there is a cluster of data points at one area, near the bottom left of the plot, with most of the points being Lvl land contour. The outliers are in the Low Land Contour catagory with more than 200000 lot area and another one has a sale's price of over 6e+05, a lot more than the rest. 
+```{r}
+
+ggplot(tkurra_house2, aes(x = LotArea, y = SalePrice, color = LandContour)) +
+  geom_point() +
+  labs(x = "Lot Area", y = "Sale Price", title = "Sale Price vs Lot Area")
+
+```
+
+###Question 5 :
+### I created a fit multiple linear regression model using the lm functions with SalePrice as the response varaible and LotArea and FirstFlrSF as predictors. After, I created a summary, I used two diferent combinations of LotArea and FirstFlrSF for the predict function.
+```{r}
+lm_model <- lm(SalePrice ~ LotArea + FirstFlrSF, data = tkurra_house2)
+
+summary(lm_model)
+
+new_data <- data.frame(LotArea = c(8000, 10000), FirstFlrSF = c(1200, 1500))
+predictions <- predict(lm_model, newdata = new_data)
+predictions
+```
+
+#TASK 1 : OPENENDED Part
+
+###Question 1 :
+###https://www.kaggle.com/datasets/jessemostipak/hotel-booking-demand is the URL of where I found the dataset
+###1. Does a certain hotel style have less cancellations than the other?
+###2. Is the average stay in during weeknights greater in summer months than fall? 
+
+###Question 2 :
+### I read in the dataset and renamed it "data" to make it easier to code with
+```{r}
+hotel_bookings <- read_csv("Desktop/hotel_bookings.csv")
+View(hotel_bookings)
+```
+###Question 3 : The function takes a data frame, a selection of columns (defaulting to all columns in the data frame), and an optional grouping variable. The function gives summary statistics for numeric columns, including mean, variance, and 0.05 and 0.95 quantiles. If a grouping variable is specified, the statistics are provided for each level of the grouping variable. For categorical columns, it gives contingency tables. 
+```{r}
+
+summary_statistics <- function(data, columns = c("lead_time", "stay_in_weekend_nights", "stay_in_week_nights", "adults", "children", "babies","reservation_status", "hotel", "country"), grouping_var = NULL) {
+  
+  numeric_cols <- intersect(columns, names(data)[sapply(data, is.numeric)])
+  cat_cols <- intersect(columns, names(data)[sapply(data, is.factor)])
+  
+  numeric_summary <- lapply(numeric_cols, function(col) {
+    if (is.null(grouping_var)) {
+      summary_df <- data %>%
+        summarise(
+          mean = mean(.data[[col]], na.rm = TRUE),
+          variance = var(.data[[col]], na.rm = TRUE),
+          quantile_5 = quantile(.data[[col]], probs = 0.05, na.rm = TRUE),
+          quantile_95 = quantile(.data[[col]], probs = 0.95, na.rm = TRUE)
+        )
+    } else {
+      summary_df <- data %>%
+        group_by({{ grouping_var }}) %>%
+        summarise(
+          mean = mean(.data[[col]], na.rm = TRUE),
+          variance = var(.data[[col]], na.rm = TRUE),
+          quantile_5 = quantile(.data[[col]], probs = 0.05, na.rm = TRUE),
+          quantile_95 = quantile(.data[[col]], probs = 0.95, na.rm = TRUE)
+        )
+    }
+    colnames(summary_df)[1] <- "Group"
+    summary_df <- cbind("Statistic" = rep(c("Mean", "Variance", "Quantile_5", "Quantile_95"), each = nrow(summary_df)), summary_df)
+    summary_df
+  })
+  
+  cat_summary <- lapply(cat_cols, function(col) {
+    if (is.null(grouping_var)) {
+      contingency_table <- table(data[[col]])
+    } else {
+      contingency_table <- table(data[[col]], data[[grouping_var]])
+    }
+    contingency_table
+  })
+  
+  return(list(numeric_summary = numeric_summary, cat_summary = cat_summary))
+}
+
+```
+
+
+###Question 4 : I applied the function is a couple ways including with one column, for all columns with "reservation_status" as the grouping variable, and summary statistics for all numeric columns without grouping variable.
+```{r}
+
+summary_statistics(hotel_bookings, grouping_var = "reservation_status")
+
+result_group_by_res_status <- summary_statistics(hotel_bookings, grouping_var = "reservation_status")
+print(result_group_by_res_status$numeric_summary)
+
+result_all_numeric <- summary_statistics(hotel_bookings)
+print(result_all_numeric$numeric_summary)
+
+
+```
+
