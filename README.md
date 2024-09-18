@@ -1,1 +1,7 @@
 # R-Projects
+
+## FinalProj
+This data analysis project involves reading in a house dataset using R and performing various tasks, including data cleaning and transformation. The data is filtered based on specific conditions, and a new variable, DivSP, is created by scaling the sale price. Unnecessary columns are removed, and summary statistics such as the mean, standard deviation, and quantiles for variables like "SalePrice" and "LotArea" are computed. A scatter plot is generated to visualize the relationship between "LotArea" and "SalePrice." A multiple linear regression model is built to predict sale prices based on "LotArea" and "FirstFlrSF." Finally, an open-ended analysis is conducted using a hotel bookings dataset, which includes a custom function to summarize both numeric and categorical variables, with options for grouping by certain factors.
+
+##Homework3
+This homework assignemt also focuses on data analysis and visualization using R. In the prescriptive part, the dataset on beans is cleaned and transformed by removing columns, renaming variables, and creating new features like the average of the major and minor axis lengths. Correlations between several variables are calculated, and multiple plots are generated, including bar charts comparing bean classes by solidity and histograms with density overlays. In the open-ended part, a hotel bookings dataset is analyzed to explore trends in cancellations and the average stay during weeknights across different seasons, providing insights into booking patterns.
